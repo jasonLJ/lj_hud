@@ -10,13 +10,19 @@ local Settings = {}
 -- Colors
 Settings.COLOR_FG = Color( 221, 221, 221, 225 )
 Settings.COLOR_BG = Color ( 10, 10, 10, 225 )
-Settings.COLOR_BORDER = Color ( 10, 10, 10, 255 )
+Settings.COLOR_BORDER = Color( 10, 10, 10, 255 )
+
+Settings.HEALTH_COLOR_TEXT = Settings.COLOR_FG
+Settings.HEALTH_COLOR_BG = Color( 255, 0, 0, 55 )
+Settings.HEALTH_COLOR_FG = Color( 255, 94, 94, 55 )
+Settings.HEALTH_COLOR_BORDER = Color( 10, 10, 10, 155)
 
 -- Dimensions
 Settings.WIDTH = 700
 Settings.HEIGHT = 50
 
 Settings.CORNER_RADIUS = 4
+Settings.HEALTH_CORNER_RADIUS = 2
 
 Settings.BORDER_HEIGHT = 2
 Settings.BORDER_WIDTH = Settings.WIDTH
@@ -32,6 +38,13 @@ Settings.Y_OFFSET = 0
 Settings.HP_POSITION = "left"
 Settings.MONEY_POSITION = "center"
 Settings.INFO_POSITION = "right"
+
+-- Paddings
+Settings.HP_PADDING = 6
+Settings.MONEY_PADDING = 0
+Settings.INFO_PADDING = 0
+
+Settings.HEALTH_PADDING_INTERIOR = 4
 
 --[[---------------------------------------------------------
 	Name: Positions
@@ -58,37 +71,52 @@ Settings.BORDER_X = Settings.X
 Settings.BORDER_Y = ScrH() - Settings.BORDER_HEIGHT + Settings.Y_OFFSET
 
 -- Relative Position
-Settings.PARTITION_SIZE = Settings.WIDTH / 3
+Settings.PARTITION_WIDTH = Settings.WIDTH / 3
 Settings.LEFT_X = Settings.X
-Settings.CENTER_X = Settings.LEFT_X + PARTITION_SIZE
-Settings.CENTER_Y = Settings.CENTER_X + PARTITION_SIZE
+Settings.CENTER_X = Settings.LEFT_X + Settings.PARTITION_WIDTH
+Settings.RIGHT_X = Settings.CENTER_X + Settings.PARTITION_WIDTH
 
 -- HP Bar Position
-if ( HP_POSITION == "left" ) then
+Settings.HP_X = -1
+
+if ( Settings.HP_POSITION == "left" ) then
 	Settings.HP_X  = Settings.LEFT_X
-elseif ( HP_POSITION == "center" ) then
+elseif ( Settings.HP_POSITION == "center" ) then
 	Settings.HP_X = Settings.CENTER_X
-elseif ( HP_POSITION == "right" ) then
+elseif ( Settings.HP_POSITION == "right" ) then
 	Settings.HP_X = Settings.RIGHT_X
 end
 
+Settings.HP_X = Settings.HP_X + Settings.HP_PADDING
+Settings.HP_Y = Settings.Y + Settings.HP_PADDING
+
 -- Money Information Position
-if ( MONEY_POSITION == "left" ) then
+Settings.MONEY_X = -1
+
+if ( Settings.MONEY_POSITION == "left" ) then
 	Settings.MONEY_X = Settings.LEFT_X
-elseif ( MONEY_POSITION == "center" ) then
+elseif ( Settings.MONEY_POSITION == "center" ) then
 	Settings.MONEY_X = Settings.CENTER_X
-elseif ( MONEY_POSITION == "right" ) then
+elseif ( Settings.MONEY_POSITION == "right" ) then
 	Settings.MONEY_X = Settings.RIGHT_X
 end
 
+Settings.MONEY_X = Settings.MONEY_X + Settings.MONEY_PADDING
+Settings.MONEY_Y = Settings.Y + Settings.HP_PADDING
+
 -- General Information Position
-if ( INFO_POSITION == "left" ) then
+Settings.INFO_X = -1
+
+if ( Settings.INFO_POSITION == "left" ) then
 	Settings.INFO_X = Settings.LEFT_X
-elseif ( INFO_POSITION == "center" ) then
+elseif ( Settings.INFO_POSITION == "center" ) then
 	Settings.INFO_X = Settings.CENTER_X
-elseif ( INFO_POSITION == "right" ) then
+elseif ( Settings.INFO_POSITION == "right" ) then
 	Settings.INFO_X = Settings.RIGHT_X
 end
+
+Settings.INFO_X = Settings.INFO_X + Settings.INFO_PADDING
+Settings.INFO_Y = Settings.Y + Settings.INFO_PADDING
 
 --[[---------------------------------------------------------
 	Name: FormatTextOverflow
@@ -126,11 +154,48 @@ end
 
 local function PaintBase()
 
-	-- Background drawing
+	-- Background Drawing
 	draw.RoundedBox( Settings.CORNER_RADIUS, Settings.X, Settings.Y, Settings.WIDTH, Settings.HEIGHT, Settings.COLOR_BG )
 
-	-- Border drawing
+	-- Border Drawing
 	draw.RoundedBox( 0, Settings.BORDER_X, Settings.BORDER_Y, Settings.BORDER_WIDTH, Settings.BORDER_HEIGHT, Settings.COLOR_BORDER )
+
+end
+
+--[[---------------------------------------------------------
+	Name: Health Bar
+-----------------------------------------------------------]]
+
+local function PaintHealth()
+
+	-- Health Bar Dimensions
+	local healthBarWidth = Settings.PARTITION_WIDTH - ( 2 * Settings.HP_PADDING )
+	local healthBarHeight = Settings.HEIGHT - ( 2 * Settings.HP_PADDING )
+
+	-- Border Drawing
+	draw.RoundedBox( Settings.HEALTH_CORNER_RADIUS, Settings.HP_X, Settings.HP_Y, healthBarWidth, healthBarHeight, Settings.HEALTH_COLOR_BORDER )
+
+	-- Background Position
+	local backgroundX = Settings.HP_X + Settings.HEALTH_PADDING_INTERIOR
+	local backgroundY = Settings.HP_Y + Settings.HEALTH_PADDING_INTERIOR
+
+	-- Background Dimensions
+	local backgroundWidth = healthBarWidth - ( 2 * ( Settings.HEALTH_PADDING_INTERIOR ) )
+	local backgroundHeight = healthBarHeight - ( 2 * (Settings.HEALTH_PADDING_INTERIOR ) )
+
+	-- Background Drawing
+	draw.RoundedBox( Settings.HEALTH_CORNER_RADIUS, backgroundX, backgroundY, backgroundWidth, backgroundHeight, Settings.HEALTH_COLOR_BG )
+
+	-- Foreground Position
+	local foregroundX = backgroundX + Settings.HEALTH_PADDING_INTERIOR
+	local foregroundY = backgroundY -- Foreground health bar has full parent height
+
+	-- Foreground Dimensions
+	local foregroundWidth = backgroundWidth - Settings.HEALTH_PADDING_INTERIOR -- Only 1 x HEALTH_PADDING_INTERIOR because foreground health bar expands fully to the right
+	local foregroundHeight = backgroundHeight -- Foreground health bar has full parent height
+
+	-- Foreground Drawing
+	draw.RoundedBox( Settings.HEALTH_CORNER_RADIUS, foregroundX, foregroundY, foregroundWidth, foregroundHeight, Settings.HEALTH_COLOR_FG )
 
 end
 
@@ -142,6 +207,7 @@ local function PaintHUD()
 
 	-- Custom Elements
 	PaintBase()
+	PaintHealth()
 
 	--GAMEMODE.BaseClass:HUDPaint()
 
