@@ -44,7 +44,11 @@ Settings.HP_PADDING = 6
 Settings.MONEY_PADDING = 0
 Settings.INFO_PADDING = 0
 
-Settings.HEALTH_PADDING_INTERIOR = 4
+Settings.HEALTH_PADDING_BACKGROUND = 2
+Settings.HEALTH_PADDING_FOREGROUND = 4
+
+-- Miscellaneous
+Settings.MAX_HEALTH = 100
 
 --[[---------------------------------------------------------
 	Name: Positions
@@ -168,6 +172,12 @@ end
 
 local function PaintHealth()
 
+	-- Common Variables
+	local health = LocalPlayer():Health() or 0
+	if ( health < 0 ) then health = 0 elseif ( health > Settings.MAX_HEALTH ) then health = Settings.MAX_HEALTH end -- Bind health between 0 and maxHeatlh
+
+	local healthPercentage = health / 100
+
 	-- Health Bar Dimensions
 	local healthBarWidth = Settings.PARTITION_WIDTH - ( 2 * Settings.HP_PADDING )
 	local healthBarHeight = Settings.HEIGHT - ( 2 * Settings.HP_PADDING )
@@ -175,23 +185,26 @@ local function PaintHealth()
 	-- Border Drawing
 	draw.RoundedBox( Settings.HEALTH_CORNER_RADIUS, Settings.HP_X, Settings.HP_Y, healthBarWidth, healthBarHeight, Settings.HEALTH_COLOR_BORDER )
 
+	-- Stop drawing if we have no health
+	if ( health <= 0 ) then return end
+
 	-- Background Position
-	local backgroundX = Settings.HP_X + Settings.HEALTH_PADDING_INTERIOR
-	local backgroundY = Settings.HP_Y + Settings.HEALTH_PADDING_INTERIOR
+	local backgroundX = Settings.HP_X + Settings.HEALTH_PADDING_BACKGROUND
+	local backgroundY = Settings.HP_Y + Settings.HEALTH_PADDING_BACKGROUND
 
 	-- Background Dimensions
-	local backgroundWidth = healthBarWidth - ( 2 * ( Settings.HEALTH_PADDING_INTERIOR ) )
-	local backgroundHeight = healthBarHeight - ( 2 * (Settings.HEALTH_PADDING_INTERIOR ) )
+	local backgroundWidth = ( healthBarWidth - ( 2 * ( Settings.HEALTH_PADDING_BACKGROUND ) ) ) * healthPercentage
+	local backgroundHeight = healthBarHeight - ( 2 * (Settings.HEALTH_PADDING_BACKGROUND ) )
 
 	-- Background Drawing
 	draw.RoundedBox( Settings.HEALTH_CORNER_RADIUS, backgroundX, backgroundY, backgroundWidth, backgroundHeight, Settings.HEALTH_COLOR_BG )
 
 	-- Foreground Position
-	local foregroundX = backgroundX + Settings.HEALTH_PADDING_INTERIOR
+	local foregroundX = backgroundX + Settings.HEALTH_PADDING_FOREGROUND
 	local foregroundY = backgroundY -- Foreground health bar has full parent height
 
 	-- Foreground Dimensions
-	local foregroundWidth = backgroundWidth - Settings.HEALTH_PADDING_INTERIOR -- Only 1 x HEALTH_PADDING_INTERIOR because foreground health bar expands fully to the right
+	local foregroundWidth = backgroundWidth - Settings.HEALTH_PADDING_FOREGROUND -- Only 1 x HEALTH_PADDING_BACKGROUND because foreground health bar expands fully to the right
 	local foregroundHeight = backgroundHeight -- Foreground health bar has full parent height
 
 	-- Foreground Drawing
