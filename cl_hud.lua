@@ -11,6 +11,7 @@ local Settings = {}
 Settings.COLOR_FG = Color( 221, 221, 221, 225 )
 Settings.COLOR_BG = Color( 10, 10, 10, 225 )
 Settings.COLOR_BG_LOCKDOWN = Color( 85, 4, 4, 225 )
+Settings.Color_BG_ARRESTED = Color( 4, 4,85, 225 )
 Settings.COLOR_BORDER = Color( 10, 10, 10, 255 )
 
 Settings.HEALTH_COLOR_DARK_DELTA = 40
@@ -293,8 +294,11 @@ hook.Add( "HUDShouldDraw", "HideElements", HideElements )
 local function PaintBase()
 
 	-- Determining Color
+	local currentBackgroundColor = nil
 	if ( GetGlobalBool( "DarkRP_LockDown" ) ) then
 		currentBackgroundColor = Settings.COLOR_BG_LOCKDOWN
+	elseif ( LocalPlayer():getDarkRPVar( "Arrested" ) ) then
+		currentBackgroundColor = Settings.Color_BG_ARRESTED
 	else
 		currentBackgroundColor = Settings.COLOR_BG
 	end
@@ -527,7 +531,7 @@ local function PaintLockDown()
 		-- Position
 		local centerX = Settings.X + ( Settings.WIDTH / 2 )
 		local messageX = centerX
-		local messageY = Settings.Y - ( Settings.MESSAGE_Y_BUFFER )
+		local messageY = Settings.Y - Settings.MESSAGE_Y_BUFFER
 
 		-- Message
 		local message = DarkRP.getPhrase( "lockdown_started" )
@@ -561,6 +565,8 @@ local function PaintGunLicense()
 		-- Background Color
 		if ( GetGlobalBool( "DarkRP_LockDown" ) ) then
 			currentBackgroundColor = Settings.COLOR_BG_LOCKDOWN
+		elseif ( LocalPlayer():getDarkRPVar( "Arrested" ) ) then
+			currentBackgroundColor = Settings.COLOR_BG_ARRESTED
 		else
 			currentBackgroundColor = Settings.COLOR_BG
 		end
@@ -625,10 +631,41 @@ local function PaintAgenda()
 	-- Agenda Drawing
 	draw.DrawNonParsedText( agendaText, Settings.FONT, Settings.AGENDA_X_TITLE, Settings.AGENDA_Y_TEXT, Settings.COLOR_FG, TEXT_ALIGN_LEFT )
 
-	-- draw.DrawNonParsedText( agenda.Title, "DarkRPHUD1", 30, 12, Color(255, 0, 0, 255), 0 )
-	 --draw.DrawNonParsedText( agendaText, "DarkRPHUD1", 30, 35, Color(255, 255, 255, 255), 0 )
+end
+
+--[[---------------------------------------------------------
+	Name: Arrested
+-----------------------------------------------------------]]
+
+local Arrested = function() end
+local startArrested = CurTime()
+local arrestedUntil = -1 -- Temporary
+usermessage.Hook( "GotArrested", function( msg )
+
+	startArrested = CurTime()
+	arrestedUntil = msg:ReadFloat()
+
+end )
+
+local function PaintArrested()
+
+	if LocalPlayer():getDarkRPVar( "Arrested" ) then
+	
+		-- Position
+		local centerX = Settings.X + ( Settings.WIDTH / 2 )
+		local messageX = centerX
+		local messageY = Settings.Y - Settings.MESSAGE_Y_BUFFER
+
+		-- Message
+		local message = DarkRP.getPhrase( "youre_arrested", math.ceil( arrestedUntil - ( CurTime() - startArrested ) ) )
+
+		-- Drawing Message
+		draw.DrawText( message, Settings.FONT, messageX, messageY, Settings.COLOR_FG, TEXT_ALIGN_CENTER )
+
+	end
 
 end
+
 
 --[[---------------------------------------------------------
 	Name: HUD Paint
@@ -644,6 +681,7 @@ local function PaintHUD()
 	PaintLockDown()
 	PaintGunLicense()
 	PaintAgenda()
+	PaintArrested()
 
 	--GAMEMODE.BaseClass:HUDPaint()
 
