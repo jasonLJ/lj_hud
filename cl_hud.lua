@@ -494,7 +494,7 @@ end
 	Name: LockDown
 -----------------------------------------------------------]]
 
-local function LockDown()
+local function PaintLockDown()
 
 	local chbxX, chboxY = chat.GetChatBoxPos()
 
@@ -518,7 +518,7 @@ end
 	Name: GunLicense
 -----------------------------------------------------------]]
 
-local function GunLicense()
+local function PaintGunLicense()
 
 	local pageMaterial = Material( Settings.LICENSE_MATERIAL )
 
@@ -576,8 +576,8 @@ local function PaintHUD()
 	PaintHealth()
 	PaintMoneyStack()
 	PaintInfo()
-	LockDown()
-	GunLicense()
+	PaintLockDown()
+	PaintGunLicense()
 
 	--GAMEMODE.BaseClass:HUDPaint()
 
