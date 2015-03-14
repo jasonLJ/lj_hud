@@ -226,9 +226,11 @@ end
 
 function FormatNumber( x )
 
+	x = tonumber( x )
+
 	if not x then return "" end
 
-	if x >= 1e14 then return tostring( x ) end -- Doesn't seem to work right now
+	if x >= 1e14 then return tostring( x ) end
 
 	x = tostring( x )
 
