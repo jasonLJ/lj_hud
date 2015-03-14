@@ -9,7 +9,8 @@ local Settings = {}
 
 -- Colors
 Settings.COLOR_FG = Color( 221, 221, 221, 225 )
-Settings.COLOR_BG = Color ( 10, 10, 10, 225 )
+Settings.COLOR_BG = Color( 10, 10, 10, 225 )
+Settings.COLOR_BG_LOCKDOWN = Color( 85, 4, 4, 225 )
 Settings.COLOR_BORDER = Color( 10, 10, 10, 255 )
 
 Settings.HEALTH_COLOR_DARK_DELTA = 40
@@ -29,6 +30,7 @@ Settings.HEIGHT = 50
 Settings.CORNER_RADIUS = 4
 Settings.HEALTH_CORNER_RADIUS = 2
 Settings.INFO_CORNER_RADIUS = Settings.HEALTH_CORNER_RADIUS
+Settings.LICENSE_CORNER_RADIUS = Settings.CORNER_RADIUS
 
 Settings.BORDER_HEIGHT = 2
 Settings.BORDER_WIDTH = Settings.WIDTH
@@ -36,12 +38,19 @@ Settings.BORDER_WIDTH = Settings.WIDTH
 Settings.MONEY_DIVIDER_HEIGHT = 2 -- Pixels
 Settings.MONEY_DIVIDER_WIDTH = 0.7 -- Ratio
 
+Settings.LICENSE_WIDTH = 32
+Settings.LICENSE_HEIGHT = 32
+
 -- Positions
 Settings.X_ALIGN = "center" -- center, left, right
 Settings.Y_ALIGN = "bottom" -- top, bottom
 
 Settings.X_OFFSET = 0
 Settings.Y_OFFSET = 0
+
+Settings.LICENSE_X_OFFSET = 8
+
+Settings.MESSAGE_Y_BUFFER = 30
 
 -- Relative Positions
 Settings.HEALTH_POSITION = "left"
@@ -59,9 +68,12 @@ Settings.HEALTH_PADDING_FOREGROUND = 4
 Settings.INFO_PADDING_BACKGROUND = Settings.HEALTH_PADDING_BACKGROUND
 Settings.INFO_PADDING_FOREGROUND = Settings.HEALTH_PADDING_FOREGROUND
 
+Settings.LICENSE_PADDING = 4
+
 -- Miscellaneous
 Settings.FONT = "ChatFont"
 Settings.MAX_HEALTH = 100
+Settings.LICENSE_MATERIAL = "icon16/page_white_text.png"
 
 --[[---------------------------------------------------------
 	Name: Elements Table
@@ -103,10 +115,6 @@ if ( Settings.Y_ALIGN == "top" ) then
 elseif ( Settings.Y_ALIGN == "bottom" ) then
 	Settings.Y = ScrH() - Settings.HEIGHT + Settings.Y_OFFSET
 end
-
--- Border Position
-Settings.BORDER_X = Settings.X
-Settings.BORDER_Y = ScrH() - Settings.BORDER_HEIGHT + Settings.Y_OFFSET
 
 -- Relative Position
 Settings.PARTITION_WIDTH = Settings.WIDTH / 3
@@ -155,6 +163,16 @@ end
 
 Settings.INFO_X = Settings.INFO_X + Settings.INFO_PADDING
 Settings.INFO_Y = Settings.Y + Settings.INFO_PADDING
+
+-- Border Position
+
+Settings.BORDER_X = Settings.X
+
+ if ( Settings.Y_ALIGN == "top" ) then
+ 	Settings.BORDER_Y = 0
+ elseif ( Settings.Y_ALIGN == "bottom" ) then
+ 	Settings.BORDER_Y = ScrH() - Settings.BORDER_HEIGHT
+ end
 
 --[[---------------------------------------------------------
 	Name: Dimensions
@@ -232,12 +250,14 @@ end
 -----------------------------------------------------------]]
 
 local function HideElements( element )
+
 	if HideElementsTable[ element ] then
 		
 		--> Stop Draw
 		return false
 
 	end
+
 end
 
 hook.Add( "HUDShouldDraw", "HideElements", HideElements )
@@ -248,8 +268,15 @@ hook.Add( "HUDShouldDraw", "HideElements", HideElements )
 
 local function PaintBase()
 
+	-- Determining Color
+	if ( GetGlobalBool( "DarkRP_LockDown" ) ) then
+		currentBackgroundColor = Settings.COLOR_BG_LOCKDOWN
+	else
+		currentBackgroundColor = Settings.COLOR_BG
+	end
+
 	-- Background Drawing
-	draw.RoundedBox( Settings.CORNER_RADIUS, Settings.X, Settings.Y, Settings.WIDTH, Settings.HEIGHT, Settings.COLOR_BG )
+	draw.RoundedBox( Settings.CORNER_RADIUS, Settings.X, Settings.Y, Settings.WIDTH, Settings.HEIGHT, currentBackgroundColor )
 
 	-- Border Drawing
 	draw.RoundedBox( 0, Settings.BORDER_X, Settings.BORDER_Y, Settings.BORDER_WIDTH, Settings.BORDER_HEIGHT, Settings.COLOR_BORDER )
@@ -464,6 +491,81 @@ local function PaintInfo()
 end
 
 --[[---------------------------------------------------------
+	Name: LockDown
+-----------------------------------------------------------]]
+
+local function LockDown()
+
+	local chbxX, chboxY = chat.GetChatBoxPos()
+
+	if GetGlobalBool( "DarkRP_LockDown" ) then
+	
+		-- Position
+		local centerX = Settings.X + ( Settings.WIDTH / 2 )
+		local messageX = centerX
+		local messageY = Settings.Y - ( Settings.MESSAGE_Y_BUFFER )
+
+		-- Message
+		local message = DarkRP.getPhrase( "lockdown_started" )
+
+		-- Drawing Message
+		draw.DrawText( message, Settings.FONT, messageX, messageY, Settings.COLOR_FG, TEXT_ALIGN_CENTER )
+	end
+
+end
+
+--[[---------------------------------------------------------
+	Name: GunLicense
+-----------------------------------------------------------]]
+
+local function GunLicense()
+
+	local pageMaterial = Material( Settings.LICENSE_MATERIAL )
+
+	if ( LocalPlayer():getDarkRPVar( "HasGunlicense" ) ) then
+
+		-- Background Position
+		local backgroundX = Settings.X + Settings.WIDTH + Settings.LICENSE_X_OFFSET
+
+		local backgroundY = -1 -- Temporary
+		if ( Settings.Y_ALIGN == "top" ) then
+			backgroundY = 0  -- Very top
+		elseif ( Settings.Y_ALIGN == "bottom" ) then
+			backgroundY = ScrH() - Settings.LICENSE_HEIGHT
+		end
+
+		-- Background Color
+		if ( GetGlobalBool( "DarkRP_LockDown" ) ) then
+			currentBackgroundColor = Settings.COLOR_BG_LOCKDOWN
+		else
+			currentBackgroundColor = Settings.COLOR_BG
+		end
+
+		-- Background Drawing
+ 		draw.RoundedBox( Settings.LICENSE_CORNER_RADIUS, backgroundX, backgroundY, Settings.LICENSE_WIDTH, Settings.LICENSE_HEIGHT, currentBackgroundColor )
+
+ 		-- Border Drawing
+ 		draw.RoundedBox( 0, Settings.BORDER_X, Settings.BORDER_Y, Settings.LICENSE_WIDTH, Settings.BORDER_HEIGHT, Settings.COLOR_BORDER )
+
+ 		-- Page Position
+ 		local pageX = backgroundX + Settings.LICENSE_PADDING
+ 		local pageY = backgroundY + Settings.LICENSE_PADDING
+
+ 		-- Page Dimensions
+ 		local pageWidth = Settings.LICENSE_WIDTH - ( 2 * Settings.LICENSE_PADDING )
+ 		local pageHeight = Settings.LICENSE_HEIGHT - Settings.LICENSE_PADDING -- Only one - no padding on bottom edge
+
+		-- Surface Drawing Setup
+		surface.SetMaterial( pageMaterial )
+		surface.SetDrawColor( 255, 255, 255, 255 )
+
+		-- Drawing License Indicator
+		surface.DrawTexturedRect( pageX, pageY, pageWidth, pageHeight )
+
+	end
+end
+
+--[[---------------------------------------------------------
 	Name: HUD Paint
 -----------------------------------------------------------]]
 
@@ -472,9 +574,10 @@ local function PaintHUD()
 	-- Custom Elements
 	PaintBase()
 	PaintHealth()
-	-- PaintMoneyLine()
 	PaintMoneyStack()
 	PaintInfo()
+	LockDown()
+	GunLicense()
 
 	--GAMEMODE.BaseClass:HUDPaint()
 
