@@ -23,23 +23,32 @@ Settings.INFO_COLOR_BORDER = Settings.HEALTH_COLOR_BORDER
 Settings.INFO_COLOR_TEAM_ALPHA = Settings.HEALTH_COLOR_FG.a
 Settings.INFO_COLOR_DIVIDER = Settings.COLOR_FG
 
+Settings.AGENDA_COLOR_HEADER = Settings.COLOR_BORDER
+
 -- Dimensions
 Settings.WIDTH = 700
 Settings.HEIGHT = 50
 
 Settings.CORNER_RADIUS = 4
 Settings.HEALTH_CORNER_RADIUS = 2
+
+Settings.HEIGHT_BORDER = 2
+Settings.WIDTH_BORDER = Settings.WIDTH
+
+Settings.MONEY_HEIGHT_DIVIDER = 2 -- Pixels
+Settings.MONEY_WIDTH_DIVIDER = 0.7 -- Ratio
+
 Settings.INFO_CORNER_RADIUS = Settings.HEALTH_CORNER_RADIUS
-Settings.LICENSE_CORNER_RADIUS = Settings.CORNER_RADIUS
-
-Settings.BORDER_HEIGHT = 2
-Settings.BORDER_WIDTH = Settings.WIDTH
-
-Settings.MONEY_DIVIDER_HEIGHT = 2 -- Pixels
-Settings.MONEY_DIVIDER_WIDTH = 0.7 -- Ratio
 
 Settings.LICENSE_WIDTH = 32
 Settings.LICENSE_HEIGHT = 32
+Settings.LICENSE_CORNER_RADIUS = Settings.CORNER_RADIUS
+
+Settings.AGENDA_WIDTH = 450
+Settings.AGENDA_HEIGHT = 125
+Settings.AGENDA_HEIGHT_HEADER = 25
+Settings.AGENDA_CORNER_RADIUS = Settings.CORNER_RADIUS
+Settings.AGENDA_CORNER_RADIUS_HEADER = 0
 
 -- Positions
 Settings.X_ALIGN = "center" -- center, left, right
@@ -51,6 +60,10 @@ Settings.Y_OFFSET = 0
 Settings.LICENSE_X_OFFSET = 8
 
 Settings.MESSAGE_Y_BUFFER = 30
+
+Settings.AGENDA_X = 10 -- TODO: Make these calculated values
+Settings.AGENDA_Y = 0 -- Based on special alignment variables.
+Settings.AGENDA_Y_TEXT = 30
 
 -- Relative Positions
 Settings.HEALTH_POSITION = "left"
@@ -70,10 +83,14 @@ Settings.INFO_PADDING_FOREGROUND = Settings.HEALTH_PADDING_FOREGROUND
 
 Settings.LICENSE_PADDING = 4
 
+Settings.AGENDA_PADDING_TITLE_X = 8
+Settings.AGENDA_PADDING_TITLE_Y = Settings.AGENDA_PADDING_TITLE_X / 2
+
 -- Miscellaneous
 Settings.FONT = "ChatFont"
 Settings.MAX_HEALTH = 100
 Settings.LICENSE_MATERIAL = "icon16/page_white_text.png"
+Settings.PIXEL_WIDTH = 440
 
 --[[---------------------------------------------------------
 	Name: Elements Table
@@ -165,14 +182,19 @@ Settings.INFO_X = Settings.INFO_X + Settings.INFO_PADDING
 Settings.INFO_Y = Settings.Y + Settings.INFO_PADDING
 
 -- Border Position
-
 Settings.BORDER_X = Settings.X
 
  if ( Settings.Y_ALIGN == "top" ) then
  	Settings.BORDER_Y = 0
  elseif ( Settings.Y_ALIGN == "bottom" ) then
- 	Settings.BORDER_Y = ScrH() - Settings.BORDER_HEIGHT
+ 	Settings.BORDER_Y = ScrH() - Settings.HEIGHT_BORDER
  end
+
+ -- Agenda Title
+Settings.AGENDA_X_TITLE = Settings.AGENDA_X + Settings.AGENDA_PADDING_TITLE_X
+surface.SetFont( Settings.FONT )
+Settings.AGENDA_Y_TITLE = Settings.AGENDA_PADDING_TITLE_Y
+
 
 --[[---------------------------------------------------------
 	Name: Dimensions
@@ -281,7 +303,7 @@ local function PaintBase()
 	draw.RoundedBox( Settings.CORNER_RADIUS, Settings.X, Settings.Y, Settings.WIDTH, Settings.HEIGHT, currentBackgroundColor )
 
 	-- Border Drawing
-	draw.RoundedBox( 0, Settings.BORDER_X, Settings.BORDER_Y, Settings.BORDER_WIDTH, Settings.BORDER_HEIGHT, Settings.COLOR_BORDER )
+	draw.RoundedBox( 0, Settings.BORDER_X, Settings.BORDER_Y, Settings.WIDTH_BORDER, Settings.HEIGHT_BORDER, Settings.COLOR_BORDER )
 
 end
 
@@ -422,8 +444,8 @@ local function PaintMoneyStack()
 	draw.DrawText( walletText, Settings.FONT, centerX, walletY, Settings.COLOR_FG, TEXT_ALIGN_CENTER )
 
 	-- Divider Dimensions
-	local dividerWidth = Settings.MONEY_WIDTH * Settings.MONEY_DIVIDER_WIDTH
-	local dividerHeight = Settings.MONEY_DIVIDER_HEIGHT
+	local dividerWidth = Settings.MONEY_WIDTH * Settings.MONEY_WIDTH_DIVIDER
+	local dividerHeight = Settings.MONEY_HEIGHT_DIVIDER
 
 	-- Divider Positions
 	local dividerX = centerX - ( dividerWidth / 2 )
@@ -547,7 +569,7 @@ local function PaintGunLicense()
  		draw.RoundedBox( Settings.LICENSE_CORNER_RADIUS, backgroundX, backgroundY, Settings.LICENSE_WIDTH, Settings.LICENSE_HEIGHT, currentBackgroundColor )
 
  		-- Border Drawing
- 		draw.RoundedBox( 0, Settings.BORDER_X, Settings.BORDER_Y, Settings.LICENSE_WIDTH, Settings.BORDER_HEIGHT, Settings.COLOR_BORDER )
+ 		draw.RoundedBox( 0, Settings.BORDER_X, Settings.BORDER_Y, Settings.LICENSE_WIDTH, Settings.HEIGHT_BORDER, Settings.COLOR_BORDER )
 
  		-- Page Position
  		local pageX = backgroundX + Settings.LICENSE_PADDING
@@ -568,6 +590,47 @@ local function PaintGunLicense()
 end
 
 --[[---------------------------------------------------------
+	Name: Agenda
+-----------------------------------------------------------]]
+
+local function PaintAgenda()
+
+	local agenda = LocalPlayer():getAgendaTable()
+
+	if not agenda then return end -- Stop drawing if there is no Agenda
+
+	-- Agenda Text
+	local agendaText
+	agendaText = agendaText or DarkRP.textWrap( ( LocalPlayer():getDarkRPVar( "agenda" ) or "" ):gsub( "//", "\n" ):gsub( "\\n", "\n" ), Settings.FONT, Settings.PIXEL_WIDTH )
+
+	-- Background Color
+	if ( GetGlobalBool( "DarkRP_LockDown" ) ) then
+		currentBackgroundColor = Settings.COLOR_BG_LOCKDOWN
+	else
+		currentBackgroundColor = Settings.COLOR_BG
+	end
+
+	-- Background Drawing
+	draw.RoundedBox( Settings.AGENDA_CORNER_RADIUS, Settings.AGENDA_X, Settings.AGENDA_Y, Settings.AGENDA_WIDTH, Settings.AGENDA_HEIGHT, currentBackgroundColor )
+
+	-- Header Drawing
+	draw.RoundedBox( Settings.AGENDA_CORNER_RADIUS_HEADER, Settings.AGENDA_X, Settings.AGENDA_Y, Settings.AGENDA_WIDTH, Settings.AGENDA_HEIGHT_HEADER, Settings.AGENDA_COLOR_HEADER )
+
+	-- Title Text
+	local titleText = agenda.Title
+
+	-- Title Drawing
+	draw.DrawNonParsedText( titleText, Settings.FONT, Settings.AGENDA_X_TITLE, Settings.AGENDA_Y_TITLE, Settings.COLOR_FG, TEXT_ALIGN_LEFT )
+
+	-- Agenda Drawing
+	draw.DrawNonParsedText( agendaText, Settings.FONT, Settings.AGENDA_X_TITLE, Settings.AGENDA_Y_TEXT, Settings.COLOR_FG, TEXT_ALIGN_LEFT )
+
+	-- draw.DrawNonParsedText( agenda.Title, "DarkRPHUD1", 30, 12, Color(255, 0, 0, 255), 0 )
+	 --draw.DrawNonParsedText( agendaText, "DarkRPHUD1", 30, 35, Color(255, 255, 255, 255), 0 )
+
+end
+
+--[[---------------------------------------------------------
 	Name: HUD Paint
 -----------------------------------------------------------]]
 
@@ -580,6 +643,7 @@ local function PaintHUD()
 	PaintInfo()
 	PaintLockDown()
 	PaintGunLicense()
+	PaintAgenda()
 
 	--GAMEMODE.BaseClass:HUDPaint()
 
